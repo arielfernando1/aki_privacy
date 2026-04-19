@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKÍ – Modal sin trampa</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #111;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    flex-wrap: wrap;
+    gap: 48px;
+  }
+  .tweaks-panel {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #fff; border: 2px solid #222;
+    border-radius: 12px; padding: 16px; width: 220px;
+    display: none; flex-direction: column; gap: 12px;
+    z-index: 9999; font-family: monospace; font-size: 13px;
+    box-shadow: 4px 4px 0 #222;
+  }
+  .tweaks-panel.open { display: flex; }
+  .tweaks-panel h3 { font-size: 14px; font-weight: 700; border-bottom: 1.5px solid #ddd; padding-bottom: 8px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 4px; }
+  .tweak-row label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tweak-row select { width: 100%; cursor: pointer; padding: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="tweaks-panel" id="tweaksPanel">
+  <h3>Tweaks</h3>
+  <div class="tweak-row">
+    <label>Variante</label>
+    <select id="twk-variant">
+      <option value="all">Todas (comparar)</option>
+      <option value="0">A – Bottom sheet</option>
+      <option value="1">B – Centered card</option>
+      <option value="2">C – Full screen</option>
+    </select>
+  </div>
+  <div class="tweak-row">
+    <label>Estado modal</label>
+    <select id="twk-state">
+      <option value="open">Abierto</option>
+      <option value="closed">Cerrado (pantalla base)</option>
+    </select>
+  </div>
+</div>
+
+<script type="text/babel">
+const RED = '#C8102E';
+
+// ── Comparison table ──────────────────────────────────────────
+function CompTable({ accentBg = 'rgba(200,16,46,0.06)' }) {
+  const rows = [
+    { fn: 'Ver ofertas',       sin: true,  con: true  },
+    { fn: 'Acumular puntos',   sin: false, con: true  },
+    { fn: 'Tarjeta digital',   sin: false, con: true  },
+  ];
+  return (
+    <div style={{ borderRadius: 10, overflow: 'hidden', border: '1.5px solid #eee' }}>
+      {/* Header */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', background: '#f7f7f7', borderBottom: '1.5px solid #eee' }}>
+        <div style={{ padding: '8px 12px', fontFamily: 'Roboto,sans-serif', fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 }}>Función</div>
+        <div style={{ padding: '8px 14px', fontFamily: 'Roboto,sans-serif', fontSize: 11, fontWeight: 700, color: '#888', textAlign: 'center', width: 80 }}>Sin cuenta</div>
+        <div style={{ padding: '8px 14px', fontFamily: 'Roboto,sans-serif', fontSize: 11, fontWeight: 700, color: RED, textAlign: 'center', width: 80, background: accentBg }}>Con cuenta</div>
+      </div>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', borderBottom: i < rows.length - 1 ? '1px solid #f0f0f0' : 'none', alignItems: 'center' }}>
+          <div style={{ padding: '10px 12px', fontFamily: 'Roboto,sans-serif', fontSize: 13, color: '#333' }}>{r.fn}</div>
+          <div style={{ width: 80, textAlign: 'center', padding: '10px 0' }}>
+            {r.sin
+              ? <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#e8f5e9"/><path d="M4.5 8L7 10.5l4.5-5" stroke="#43a047" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              : <span style={{ fontFamily: 'Roboto,sans-serif', fontSize: 15, color: '#ccc', lineHeight: 1 }}>—</span>
+            }
+          </div>
+          <div style={{ width: 80, textAlign: 'center', padding: '10px 0', background: accentBg }}>
+            {r.con
+              ? <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="rgba(200,16,46,0.12)"/><path d="M4.5 8L7 10.5l4.5-5" stroke={RED} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              : <span style={{ fontFamily: 'Roboto,sans-serif', fontSize: 15, color: '#ccc' }}>—</span>
+            }
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Buttons — always equal weight ────────────────────────────
+function ModalButtons() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <button style={{
+        width: '100%', padding: '14px 0',
+        background: RED, color: '#fff',
+        border: 'none', borderRadius: 10,
+        fontFamily: 'Roboto,sans-serif', fontSize: 15, fontWeight: 700,
+        cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,16,46,0.3)',
+        letterSpacing: 0.3,
+      }}>Crear cuenta</button>
+      <button style={{
+        width: '100%', padding: '14px 0',
+        background: '#fff', color: RED,
+        border: `2px solid ${RED}`, borderRadius: 10,
+        fontFamily: 'Roboto,sans-serif', fontSize: 15, fontWeight: 700,
+        cursor: 'pointer', letterSpacing: 0.3,
+      }}>Explorar sin cuenta</button>
+    </div>
+  );
+}
+
+// ── X close button — prominent, accessible ────────────────────
+function CloseBtn({ onClose, style = {} }) {
+  return (
+    <button
+      onClick={onClose}
+      aria-label="Cerrar"
+      style={{
+        width: 32, height: 32, borderRadius: '50%',
+        background: '#f2f2f2',
+        border: '1.5px solid #e0e0e0',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', flexShrink: 0,
+        ...style,
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M1 1l10 10M11 1L1 11" stroke="#555" strokeWidth="1.8" strokeLinecap="round"/>
+      </svg>
+    </button>
+  );
+}
+
+// ── Background screen (Beneficios) ────────────────────────────
+function BeneficiosScreen() {
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#fafafa', paddingTop: 62, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '14px 16px 12px', background: '#fff', borderBottom: '1px solid #eee' }}>
+        <div style={{ fontFamily: 'Roboto,sans-serif', fontSize: 20, fontWeight: 700, color: '#111' }}>Beneficios</div>
+      </div>
+      <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}>
+        {/* Fake offer cards */}
+        {[{ label: '20% OFF', sub: 'Lácteos seleccionados' }, { label: '2×1', sub: 'Bebidas familiares' }, { label: '$1.50', sub: 'Descuento en panadería' }].map((c, i) => (
+          <div key={i} style={{ background: '#fff', borderRadius: 10, padding: '14px', display: 'flex', alignItems: 'center', gap: 12, border: '1px solid #eee' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 8, background: `rgba(200,16,46,${0.08 + i * 0.03})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'Roboto,sans-serif', fontSize: 13, fontWeight: 700, color: RED }}>{c.label}</span>
+            </div>
+            <div>
+              <div style={{ fontFamily: 'Roboto,sans-serif', fontSize: 14, fontWeight: 600, color: '#222' }}>{c.sub}</div>
+              <div style={{ fontFamily: 'Roboto,sans-serif', fontSize: 11, color: '#aaa', marginTop: 2 }}>Solo miembros AKÍ Club</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── VARIANT A: Bottom Sheet ────────────────────────────────────
+function VariantBottomSheet({ modalOpen, setModalOpen }) {
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <BeneficiosScreen />
+
+      {/* Dim overlay */}
+      {modalOpen && (
+        <div
+          onClick={() => setModalOpen(false)}
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 10, transition: 'opacity 0.2s' }}
+        />
+      )}
+
+      {/* Sheet */}
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: 0,
+        background: '#fff',
+        borderRadius: '20px 20px 0 0',
+        zIndex: 20,
+        transform: modalOpen ? 'translateY(0)' : 'translateY(110%)',
+        transition: 'transform 0.32s cubic-bezier(0.32,0.72,0,1)',
+        padding: '0 20px 32px',
+        boxShadow: '0 -4px 24px rgba(0,0,0,0.12)',
+      }}>
+        {/* Drag handle */}
+        <div style={{ width: 36, height: 4, background: '#e0e0e0', borderRadius: 2, margin: '10px auto 16px' }}/>
+
+        {/* Title row with X */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ flex: 1, paddingRight: 12 }}>
+            <div style={{ fontFamily: 'Roboto,sans-serif', fontSize: 19, fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+              Explorar sin afiliarte
+            </div>
+          </div>
+          <CloseBtn onClose={() => setModalOpen(false)} />
+        </div>
+
+        <p style={{ fontFamily: 'Roboto,sans-serif', fontSize: 13.5, color: '#666', lineHeight: 1.55, marginBottom: 16 }}>
+          Puedes ver beneficios y ofertas sin cuenta. Para acumular puntos necesitarás registrarte cuando quieras.
+        </p>
+
+        <div style={{ marginBottom: 20 }}>
+          <CompTable />
+        </div>
+
+        <ModalButtons />
+      </div>
+
+      {/* Trigger button when closed */}
+      {!modalOpen && (
+        <button
+          onClick={() => setModalOpen(true)}
+          style={{
+            position: 'absolute', bottom: 24, left: 20, right: 20,
+            background: RED, color: '#fff', border: 'none', borderRadius: 10,
+            fontFamily: 'Roboto,sans-serif', fontSize: 14, fontWeight: 700,
+            padding: '13px 0', cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(200,16,46,0.35)',
+            zIndex: 5,
+          }}
+        >Abrir modal →</button>
+      )}
+    </div>
+  );
+}
+
+// ── VARIANT B: Centered card ───────────────────────────────────
+function VariantCentered({ modalOpen, setModalOpen }) {
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <BeneficiosScreen />
+
+      {modalOpen && (
+        <>
+          <div onClick={() => setModalOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 10 }}/>
+          <div style={{
+            position: 'absolute', left: 16, right: 16,
+            top: '50%', transform: 'translateY(-50%)',
+            background: '#fff', borderRadius: 18,
+            zIndex: 20, padding: '20px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            overflow: 'hidden',
+          }}>
+            {/* Red accent top bar */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 5, background: `linear-gradient(90deg, ${RED}, #e84060)` }}/>
+
+            {/* Title row with X */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, marginTop: 4 }}>
+              <div style={{ fontFamily: 'Roboto,sans-serif', fontSize: 18, fontWeight: 700, color: '#111', lineHeight: 1.3, flex: 1, paddingRight: 10 }}>
+                Explorar sin afiliarte
+              </div>
+              <CloseBtn onClose={() => setModalOpen(false)} />
+            </div>
+
+            <p style={{ fontFamily: 'Roboto,sans-serif', fontSize: 13, color: '#666', lineHeight: 1.55, marginBottom: 14 }}>
+              Puedes ver beneficios y ofertas sin cuenta. Para acumular puntos necesitarás registrarte cuando quieras.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <CompTable accentBg="rgba(200,16,46,0.05)" />
+            </div>
+
+            <ModalButtons />
+          </div>
+        </>
+      )}
+
+      {!modalOpen && (
+        <button onClick={() => setModalOpen(true)} style={{ position: 'absolute', bottom: 24, left: 20, right: 20, background: RED, color: '#fff', border: 'none', borderRadius: 10, fontFamily: 'Roboto,sans-serif', fontSize: 14, fontWeight: 700, padding: '13px 0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,16,46,0.35)', zIndex: 5 }}>
+          Abrir modal →
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── VARIANT C: Full-screen takeover ───────────────────────────
+function VariantFullscreen({ modalOpen, setModalOpen }) {
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      {/* Background always visible as light dim */}
+      <div style={{ opacity: modalOpen ? 0.3 : 1, transition: 'opacity 0.3s', height: '100%' }}>
+        <BeneficiosScreen />
+      </div>
+
+      {/* Full screen panel */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: '#fff',
+        zIndex: 20,
+        transform: modalOpen ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.35s cubic-bezier(0.32,0.72,0,1)',
+        display: 'flex', flexDirection: 'column',
+        paddingTop: 56,
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '0 20px 16px',
+          borderBottom: '1px solid #f0f0f0',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
+          <div>
+            <div style={{ fontFamily: 'Roboto,sans-serif', fontSize: 20, fontWeight: 700, color: '#111' }}>Explorar sin afiliarte</div>
+          </div>
+          <CloseBtn onClose={() => setModalOpen(false)} style={{ width: 36, height: 36 }} />
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 28px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Illustration placeholder */}
+          <div style={{ width: '100%', height: 100, background: '#fafafa', borderRadius: 12, border: '1.5px dashed #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: 11, color: '#bbb' }}>[ illustration ]</span>
+          </div>
+
+          <p style={{ fontFamily: 'Roboto,sans-serif', fontSize: 14, color: '#555', lineHeight: 1.6 }}>
+            Puedes ver beneficios y ofertas sin cuenta. Para acumular puntos necesitarás registrarte cuando quieras.
+          </p>
+
+          <CompTable />
+
+          {/* Note */}
+          <div style={{ background: '#f9f9f9', borderRadius: 8, padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="7" cy="7" r="6.5" stroke={RED} strokeWidth="1.2"/>
+              <circle cx="7" cy="4.5" r="0.9" fill={RED}/>
+              <rect x="6.3" y="6.5" width="1.4" height="3.5" rx="0.7" fill={RED}/>
+            </svg>
+            <span style={{ fontFamily: 'Roboto,sans-serif', fontSize: 12, color: '#888', lineHeight: 1.5 }}>
+              Puedes crear tu cuenta en cualquier momento desde Mi Perfil.
+            </span>
+          </div>
+
+          <ModalButtons />
+        </div>
+      </div>
+
+      {!modalOpen && (
+        <button onClick={() => setModalOpen(true)} style={{ position: 'absolute', bottom: 24, left: 20, right: 20, background: RED, color: '#fff', border: 'none', borderRadius: 10, fontFamily: 'Roboto,sans-serif', fontSize: 14, fontWeight: 700, padding: '13px 0', cursor: 'pointer', boxShadow: '0 2px 8px rgba(200,16,46,0.35)', zIndex: 5 }}>
+          Abrir modal →
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── App ────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "variant": "1",
+  "state": "open"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [variant, setVariant] = React.useState(TWEAK_DEFAULTS.variant);
+  const initOpen = TWEAK_DEFAULTS.state === 'open';
+  const [openA, setOpenA] = React.useState(initOpen);
+  const [openB, setOpenB] = React.useState(initOpen);
+  const [openC, setOpenC] = React.useState(initOpen);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') document.getElementById('tweaksPanel').classList.add('open');
+      if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaksPanel').classList.remove('open');
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  React.useEffect(() => {
+    const v = document.getElementById('twk-variant');
+    const s = document.getElementById('twk-state');
+    if (!v) return;
+    const onChange = () => {
+      setVariant(v.value);
+      const isOpen = s.value === 'open';
+      setOpenA(isOpen); setOpenB(isOpen); setOpenC(isOpen);
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { variant: v.value, state: s.value } }, '*');
+    };
+    v.addEventListener('change', onChange);
+    s.addEventListener('change', onChange);
+    return () => { v.removeEventListener('change', onChange); s.removeEventListener('change', onChange); };
+  }, []);
+
+  const variants = [
+    { key: '0', label: 'A – Bottom sheet', el: <VariantBottomSheet modalOpen={openA} setModalOpen={setOpenA}/> },
+    { key: '1', label: 'B – Centered card', el: <VariantCentered modalOpen={openB} setModalOpen={setOpenB}/> },
+    { key: '2', label: 'C – Full screen', el: <VariantFullscreen modalOpen={openC} setModalOpen={setOpenC}/> },
+  ];
+
+  const shown = variant === 'all' ? variants : variants.filter(v => v.key === variant);
+
+  return (
+    <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
+      {shown.map(v => (
+        <div key={v.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <IOSDevice width={320} height={693} dark={false}>
+            {v.el}
+          </IOSDevice>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            {v.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

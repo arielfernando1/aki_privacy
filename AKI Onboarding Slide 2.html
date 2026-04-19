@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKÍ Club – Onboarding Privacidad</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+    <rect width="120" height="80" fill="#fff"/>
+    <rect width="120" height="28" fill="#C8102E"/>
+    <text x="60" y="18" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="bold" fill="#fff">AKÍ CLUB</text>
+    <rect x="20" y="34" width="80" height="10" rx="3" fill="#eee"/>
+    <rect x="20" y="48" width="80" height="10" rx="3" fill="#eee"/>
+    <rect x="20" y="62" width="80" height="10" rx="3" fill="#eee"/>
+    <rect x="25" y="36" width="6" height="6" rx="1" fill="#C8102E" opacity="0.5"/>
+    <rect x="25" y="50" width="6" height="6" rx="1" fill="#C8102E" opacity="0.5"/>
+    <rect x="25" y="64" width="6" height="6" rx="1" fill="#C8102E" opacity="0.5"/>
+  </svg>
+</template>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Caveat', cursive;
+    padding: 32px 16px;
+  }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .label {
+    color: rgba(255,255,255,0.4);
+    font-size: 14px;
+    font-family: monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Tweaks panel */
+  .tweaks-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 12px;
+    padding: 16px;
+    width: 200px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+    font-family: monospace;
+    font-size: 13px;
+    box-shadow: 4px 4px 0 #222;
+  }
+  .tweaks-panel.open { display: flex; }
+  .tweaks-panel h3 { font-size: 14px; font-weight: 700; border-bottom: 1.5px solid #ddd; padding-bottom: 8px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 4px; }
+  .tweak-row label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tweak-row select, .tweak-row input[type=range] { width: 100%; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="label">Wireframe · AKÍ Club · Onboarding 2/3 · Privacidad</div>
+  <div id="root"></div>
+</div>
+
+<div class="tweaks-panel" id="tweaksPanel">
+  <h3>Tweaks</h3>
+  <div class="tweak-row">
+    <label>Estilo de tarjeta</label>
+    <select id="twk-card">
+      <option value="outlined">Outlined</option>
+      <option value="filled">Filled</option>
+      <option value="minimal">Minimal</option>
+    </select>
+  </div>
+  <div class="tweak-row">
+    <label>Ícono estilo</label>
+    <select id="twk-icon">
+      <option value="sketch">Sketch</option>
+      <option value="bold">Bold</option>
+    </select>
+  </div>
+  <div class="tweak-row">
+    <label>Fondo header</label>
+    <select id="twk-header">
+      <option value="red">Rojo AKÍ</option>
+      <option value="white">Blanco</option>
+      <option value="yellow">Amarillo AKÍ</option>
+    </select>
+  </div>
+</div>
+
+<script type="text/babel">
+const RED = '#C8102E';
+const YELLOW = '#FFD100';
+
+// Sketchy SVG icons
+function LockIcon({ style = 'sketch' }) {
+  if (style === 'bold') return (
+    <svg width="36" height="40" viewBox="0 0 36 40" fill="none">
+      <rect x="4" y="18" width="28" height="20" rx="5" fill={RED} opacity="0.15" stroke={RED} strokeWidth="2.5"/>
+      <path d="M10 18V13a8 8 0 0116 0v5" stroke={RED} strokeWidth="2.5" strokeLinecap="round"/>
+      <circle cx="18" cy="28" r="3" fill={RED}/>
+      <line x1="18" y1="31" x2="18" y2="34" stroke={RED} strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  );
+  return (
+    <svg width="36" height="40" viewBox="0 0 36 40" fill="none">
+      <rect x="4" y="18" width="28" height="20" rx="5" stroke="#222" strokeWidth="2" strokeLinejoin="round" fill="none" style={{strokeDasharray:'none'}}/>
+      <path d="M10 19V13c0-5 16-5 16 0v6" stroke="#222" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <circle cx="18" cy="28" r="2.5" fill="#222"/>
+      <line x1="18" y1="30.5" x2="18" y2="33.5" stroke="#222" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function ChartIcon({ style = 'sketch' }) {
+  if (style === 'bold') return (
+    <svg width="40" height="36" viewBox="0 0 40 36" fill="none">
+      <rect x="2" y="20" width="8" height="14" rx="2" fill={RED} opacity="0.7"/>
+      <rect x="14" y="12" width="8" height="22" rx="2" fill={RED}/>
+      <rect x="26" y="4" width="8" height="30" rx="2" fill={RED} opacity="0.5"/>
+      <line x1="2" y1="35" x2="36" y2="35" stroke="#222" strokeWidth="1.5"/>
+    </svg>
+  );
+  return (
+    <svg width="40" height="36" viewBox="0 0 40 36" fill="none">
+      <rect x="3" y="21" width="7" height="13" rx="2" stroke="#222" strokeWidth="2" fill="none"/>
+      <rect x="15" y="13" width="7" height="21" rx="2" stroke="#222" strokeWidth="2" fill="none"/>
+      <rect x="27" y="5" width="7" height="29" rx="2" stroke="#222" strokeWidth="2" fill="none"/>
+      <line x1="2" y1="35" x2="36" y2="35" stroke="#222" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function ShieldIcon({ style = 'sketch' }) {
+  if (style === 'bold') return (
+    <svg width="36" height="42" viewBox="0 0 36 42" fill="none">
+      <path d="M18 2L4 8v12c0 9 7 16 14 18 7-2 14-9 14-18V8L18 2z" fill={RED} opacity="0.15" stroke={RED} strokeWidth="2.5" strokeLinejoin="round"/>
+      <path d="M11 21l5 5 9-9" stroke={RED} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  return (
+    <svg width="36" height="42" viewBox="0 0 36 42" fill="none">
+      <path d="M18 2L4 8v12c0 9 7 16 14 18 7-2 14-9 14-18V8L18 2z" stroke="#222" strokeWidth="2" strokeLinejoin="round" fill="none"/>
+      <path d="M11 21l5 5 9-9" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+// Squiggly underline decoration (sketch feel)
+function Squiggle({ color = '#C8102E', width = 60 }) {
+  return (
+    <svg height="6" width={width} style={{ display: 'block' }}>
+      <path
+        d={`M0 4 Q${width*0.1} 1 ${width*0.2} 4 Q${width*0.3} 7 ${width*0.4} 4 Q${width*0.5} 1 ${width*0.6} 4 Q${width*0.7} 7 ${width*0.8} 4 Q${width*0.9} 1 ${width} 4`}
+        fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// AKÍ Club logo (text-based, sketchy)
+function AKILogo({ headerBg }) {
+  const textColor = headerBg === 'white' ? '#C8102E' : (headerBg === 'yellow' ? '#C8102E' : '#fff');
+  const badgeBg = headerBg === 'white' ? RED : '#fff';
+  const badgeText = headerBg === 'white' ? '#fff' : RED;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      {/* Logo wordmark */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{
+          fontFamily: 'Caveat, cursive',
+          fontSize: 28, fontWeight: 700,
+          color: textColor,
+          letterSpacing: 1,
+          lineHeight: 1,
+        }}>AKÍ</div>
+        <div style={{
+          background: badgeBg,
+          color: badgeText,
+          fontFamily: 'Caveat, cursive',
+          fontSize: 13, fontWeight: 700,
+          padding: '2px 8px',
+          borderRadius: 20,
+          letterSpacing: 0.5,
+          border: `1.5px solid ${badgeText}`,
+        }}>CLUB</div>
+      </div>
+      {/* loyalty stars */}
+      <div style={{ display: 'flex', gap: 3 }}>
+        {[0,1,2,3,4].map(i => (
+          <svg key={i} width="10" height="10" viewBox="0 0 10 10">
+            <polygon points="5,1 6.2,3.8 9.5,3.8 6.9,5.8 7.9,9 5,7.2 2.1,9 3.1,5.8 0.5,3.8 3.8,3.8"
+              fill={headerBg === 'white' ? YELLOW : (headerBg === 'yellow' ? RED : YELLOW)} />
+          </svg>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Privacy item card
+function PrivacyItem({ icon, text, cardStyle, iconStyle }) {
+  const cardStyles = {
+    outlined: {
+      background: '#fff',
+      border: '2px solid #ddd',
+      borderRadius: 14,
+      padding: '14px 16px',
+      display: 'flex', alignItems: 'center', gap: 14,
+    },
+    filled: {
+      background: 'rgba(200,16,46,0.06)',
+      border: '1.5px solid rgba(200,16,46,0.15)',
+      borderRadius: 14,
+      padding: '14px 16px',
+      display: 'flex', alignItems: 'center', gap: 14,
+    },
+    minimal: {
+      background: 'transparent',
+      border: 'none',
+      borderBottom: '1.5px dashed #e0e0e0',
+      borderRadius: 0,
+      padding: '14px 4px',
+      display: 'flex', alignItems: 'center', gap: 14,
+    },
+  };
+  return (
+    <div style={cardStyles[cardStyle]}>
+      <div style={{ flexShrink: 0, width: 44, display: 'flex', justifyContent: 'center' }}>
+        {icon === 'lock' && <LockIcon style={iconStyle} />}
+        {icon === 'chart' && <ChartIcon style={iconStyle} />}
+        {icon === 'shield' && <ShieldIcon style={iconStyle} />}
+      </div>
+      <p style={{
+        fontFamily: 'Caveat, cursive',
+        fontSize: 17, lineHeight: 1.4,
+        color: '#222', fontWeight: 400,
+      }}>{text}</p>
+    </div>
+  );
+}
+
+// Nav dots
+function NavDots({ current = 1, total = 3 }) {
+  return (
+    <div style={{ display: 'flex', gap: 7, alignItems: 'center', justifyContent: 'center' }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} style={{
+          width: i === current ? 22 : 8,
+          height: 8,
+          borderRadius: 4,
+          background: i === current ? RED : '#ddd',
+          border: `1.5px solid ${i === current ? RED : '#ccc'}`,
+          transition: 'all 0.2s',
+        }} />
+      ))}
+    </div>
+  );
+}
+
+// Main screen
+function PrivacyScreen({ cardStyle, iconStyle, headerBg }) {
+  const headerColors = {
+    red: RED,
+    white: '#fff',
+    yellow: YELLOW,
+  };
+  const headerTitleColor = headerBg === 'white' ? '#222' : (headerBg === 'yellow' ? '#222' : '#fff');
+  const headerSubColor = headerBg === 'white' ? '#666' : (headerBg === 'yellow' ? '#555' : 'rgba(255,255,255,0.8)');
+
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: '#fafafa',
+      display: 'flex', flexDirection: 'column',
+      overflow: 'hidden',
+    }}>
+      {/* Header band */}
+      <div style={{
+        background: headerColors[headerBg],
+        padding: '60px 24px 28px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+        borderBottomLeftRadius: 28,
+        borderBottomRightRadius: 28,
+        // sketchy border
+        boxShadow: '0 3px 0 rgba(0,0,0,0.07)',
+      }}>
+        <AKILogo headerBg={headerBg} />
+        <div style={{ textAlign: 'center', marginTop: 4 }}>
+          <div style={{
+            fontFamily: 'Caveat, cursive',
+            fontSize: 26, fontWeight: 700,
+            color: headerTitleColor,
+            lineHeight: 1.2,
+          }}>Tu privacidad nos importa</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 2 }}>
+            <Squiggle color={headerBg === 'yellow' ? RED : YELLOW} width={180} />
+          </div>
+          <div style={{
+            fontFamily: 'Caveat, cursive',
+            fontSize: 16, color: headerSubColor,
+            marginTop: 6, lineHeight: 1.4,
+          }}>Antes de registrarte, queremos que sepas<br/>cómo usamos tu información.</div>
+        </div>
+      </div>
+
+      {/* Items */}
+      <div style={{
+        flex: 1,
+        padding: '20px 20px 12px',
+        display: 'flex', flexDirection: 'column', gap: 12,
+        overflowY: 'auto',
+      }}>
+        <PrivacyItem
+          icon="lock"
+          text="Tu cédula y datos personales se usan solo para identificarte"
+          cardStyle={cardStyle}
+          iconStyle={iconStyle}
+        />
+        <PrivacyItem
+          icon="chart"
+          text="Tu historial de compras nos ayuda a darte mejores ofertas"
+          cardStyle={cardStyle}
+          iconStyle={iconStyle}
+        />
+        <PrivacyItem
+          icon="shield"
+          text="Puedes gestionar o eliminar tus datos cuando quieras"
+          cardStyle={cardStyle}
+          iconStyle={iconStyle}
+        />
+      </div>
+
+      {/* Footer CTA */}
+      <div style={{
+        padding: '8px 24px 20px',
+        display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
+      }}>
+        <NavDots current={1} total={3} />
+
+        <button style={{
+          width: '100%',
+          background: RED,
+          color: '#fff',
+          border: `2.5px solid #8a0b1f`,
+          borderRadius: 14,
+          fontFamily: 'Caveat, cursive',
+          fontSize: 20, fontWeight: 700,
+          padding: '13px 0',
+          cursor: 'pointer',
+          boxShadow: '3px 3px 0 #8a0b1f',
+          letterSpacing: 0.5,
+          transition: 'all 0.12s',
+        }}
+        onMouseDown={e => { e.currentTarget.style.boxShadow='1px 1px 0 #8a0b1f'; e.currentTarget.style.transform='translate(2px,2px)'; }}
+        onMouseUp={e => { e.currentTarget.style.boxShadow='3px 3px 0 #8a0b1f'; e.currentTarget.style.transform=''; }}
+        >
+          Siguiente →
+        </button>
+
+        <button style={{
+          background: 'none', border: 'none',
+          fontFamily: 'Caveat, cursive',
+          fontSize: 16, color: RED,
+          cursor: 'pointer',
+          textDecoration: 'underline',
+          textDecorationStyle: 'dotted',
+          padding: '4px 8px',
+        }}>
+          Ver política completa
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [cardStyle, setCardStyle] = React.useState('outlined');
+  const [iconStyle, setIconStyle] = React.useState('sketch');
+  const [headerBg, setHeaderBg] = React.useState('red');
+
+  // Tweaks protocol
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') {
+        document.getElementById('tweaksPanel').classList.add('open');
+      } else if (e.data?.type === '__deactivate_edit_mode') {
+        document.getElementById('tweaksPanel').classList.remove('open');
+      }
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  React.useEffect(() => {
+    const card = document.getElementById('twk-card');
+    const icon = document.getElementById('twk-icon');
+    const header = document.getElementById('twk-header');
+    if (!card) return;
+    const onChange = () => {
+      setCardStyle(card.value);
+      setIconStyle(icon.value);
+      setHeaderBg(header.value);
+    };
+    card.addEventListener('change', onChange);
+    icon.addEventListener('change', onChange);
+    header.addEventListener('change', onChange);
+    return () => {
+      card.removeEventListener('change', onChange);
+      icon.removeEventListener('change', onChange);
+      header.removeEventListener('change', onChange);
+    };
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <IOSDevice width={390} height={844} dark={false}>
+        <PrivacyScreen cardStyle={cardStyle} iconStyle={iconStyle} headerBg={headerBg} />
+      </IOSDevice>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

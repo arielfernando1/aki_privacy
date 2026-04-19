@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKÍ – Permiso de Notificaciones</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<template id="__bundler_thumbnail" data-bg-color="#1a1a1a">
+  <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+    <rect width="120" height="80" fill="#fff"/>
+    <rect x="20" y="8" width="80" height="64" rx="10" fill="#f5f5f5" stroke="#222" strokeWidth="2"/>
+    <rect x="20" y="8" width="80" height="6" rx="3" fill="#C8102E"/>
+    <rect x="30" y="24" width="60" height="8" rx="3" fill="#eee"/>
+    <rect x="35" y="36" width="50" height="6" rx="3" fill="#eee"/>
+    <rect x="25" y="50" width="70" height="10" rx="5" fill="#C8102E"/>
+    <rect x="25" y="64" width="70" height="10" rx="5" fill="#fff" stroke="#C8102E" strokeWidth="1.5"/>
+  </svg>
+</template>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Caveat', cursive;
+    padding: 32px 16px;
+    gap: 48px;
+    flex-wrap: wrap;
+  }
+  .variant-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .variant-label {
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    font-family: monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Tweaks */
+  .tweaks-panel {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #fff; border: 2px solid #222;
+    border-radius: 12px; padding: 16px; width: 220px;
+    display: none; flex-direction: column; gap: 12px;
+    z-index: 9999; font-family: monospace; font-size: 13px;
+    box-shadow: 4px 4px 0 #222;
+  }
+  .tweaks-panel.open { display: flex; }
+  .tweaks-panel h3 { font-size: 14px; font-weight: 700; border-bottom: 1.5px solid #ddd; padding-bottom: 8px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 4px; }
+  .tweak-row label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tweak-row select { width: 100%; cursor: pointer; padding: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<div class="tweaks-panel" id="tweaksPanel">
+  <h3>Tweaks</h3>
+  <div class="tweak-row">
+    <label>Variante activa</label>
+    <select id="twk-variant">
+      <option value="all">Todas (comparar)</option>
+      <option value="0">A – Bottom Sheet</option>
+      <option value="1">B – Centered Modal</option>
+      <option value="2">C – Full Screen</option>
+    </select>
+  </div>
+  <div class="tweak-row">
+    <label>Estilo botones</label>
+    <select id="twk-btns">
+      <option value="stacked">Apilados</option>
+      <option value="side">Lado a lado</option>
+    </select>
+  </div>
+</div>
+
+<script type="text/babel">
+const RED = '#C8102E';
+const YELLOW = '#FFD100';
+const DARK_RED = '#8a0b1f';
+
+// ── Sketchy phone+notification illustration ──────────────────
+function PhoneIllustration({ variant }) {
+  const isFullscreen = variant === 'fullscreen';
+  const scale = isFullscreen ? 1.15 : 1;
+
+  return (
+    <svg
+      width={160 * scale} height={140 * scale}
+      viewBox="0 0 160 140"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ overflow: 'visible' }}
+    >
+      {/* Phone body */}
+      <rect x="42" y="18" width="60" height="104" rx="10"
+        stroke="#222" strokeWidth="2.2" fill="#f5f5f5"
+        strokeLinejoin="round"/>
+      {/* Screen */}
+      <rect x="46" y="28" width="52" height="80" rx="4" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+      {/* Notch */}
+      <rect x="63" y="22" width="18" height="5" rx="2.5" fill="#ccc"/>
+      {/* Home bar */}
+      <rect x="63" y="114" width="18" height="3" rx="1.5" fill="#ccc"/>
+
+      {/* Phone screen content: mini supermarket icon */}
+      <rect x="54" y="34" width="36" height="22" rx="3" fill={RED} opacity="0.12"/>
+      <text x="72" y="50" textAnchor="middle" fontFamily="Caveat, cursive" fontSize="13" fill={RED} fontWeight="700">AKÍ</text>
+
+      {/* Notification bubble flying out */}
+      <g transform="translate(82, 14)">
+        {/* bubble tail */}
+        <path d="M0 38 L-6 46 L8 42Z" fill="#fff" stroke="#222" strokeWidth="1.5" strokeLinejoin="round"/>
+        {/* bubble body */}
+        <rect x="-4" y="0" width="72" height="40" rx="10"
+          fill="#fff" stroke="#222" strokeWidth="2"
+          strokeDasharray="none"/>
+        {/* yellow accent bar */}
+        <rect x="-4" y="0" width="72" height="10" rx="10"
+          fill={YELLOW} stroke="none"/>
+        <rect x="-4" y="5" width="72" height="5" fill={YELLOW} stroke="none"/>
+        {/* notification icon */}
+        <rect x="4" y="14" width="14" height="14" rx="3" fill={RED} opacity="0.15"/>
+        <text x="11" y="25" textAnchor="middle" fontSize="10" fill={RED}>%</text>
+        {/* text lines */}
+        <rect x="22" y="16" width="38" height="4" rx="2" fill="#ddd"/>
+        <rect x="22" y="24" width="28" height="4" rx="2" fill="#eee"/>
+        {/* "nuevo" badge */}
+        <rect x="54" y="2" width="18" height="8" rx="4" fill={RED}/>
+        <text x="63" y="9" textAnchor="middle" fontFamily="Caveat,cursive" fontSize="7" fill="#fff" fontWeight="700">NEW</text>
+      </g>
+
+      {/* Sparkle dots around notification */}
+      {[[76,8],[132,6],[138,28],[130,50]].map(([cx,cy],i) => (
+        <circle key={i} cx={cx} cy={cy} r={i%2===0?2.5:1.5}
+          fill={i%2===0 ? YELLOW : RED} opacity="0.7"/>
+      ))}
+
+      {/* dashed motion lines */}
+      <path d="M82 30 Q78 22 76 14" stroke="#bbb" strokeWidth="1.2" strokeDasharray="3 3" fill="none"/>
+      <path d="M88 26 Q90 18 90 10" stroke="#bbb" strokeWidth="1.2" strokeDasharray="3 3" fill="none"/>
+    </svg>
+  );
+}
+
+// ── Squiggly underline ───────────────────────────────────────
+function Squiggle({ color = RED, width = 140 }) {
+  return (
+    <svg height="6" width={width} style={{ display: 'block', margin: '0 auto' }}>
+      <path
+        d={`M0 4 Q${width*.1} 1 ${width*.2} 4 Q${width*.3} 7 ${width*.4} 4 Q${width*.5} 1 ${width*.6} 4 Q${width*.7} 7 ${width*.8} 4 Q${width*.9} 1 ${width} 4`}
+        fill="none" stroke={color} strokeWidth="2" strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// ── Buttons (equal weight, stacked or side-by-side) ──────────
+function Buttons({ btnLayout }) {
+  const btnBase = {
+    fontFamily: 'Caveat, cursive',
+    fontSize: 17, fontWeight: 700,
+    cursor: 'pointer',
+    borderRadius: 12,
+    padding: '12px 0',
+    width: '100%',
+    letterSpacing: 0.3,
+    transition: 'all 0.1s',
+  };
+  const primaryStyle = {
+    ...btnBase,
+    background: RED,
+    color: '#fff',
+    border: `2.5px solid ${DARK_RED}`,
+    boxShadow: `3px 3px 0 ${DARK_RED}`,
+  };
+  const ghostStyle = {
+    ...btnBase,
+    background: '#fff',
+    color: RED,
+    border: `2.5px solid ${RED}`,
+    boxShadow: `3px 3px 0 rgba(200,16,46,0.25)`,
+  };
+
+  if (btnLayout === 'side') {
+    return (
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button style={{ ...ghostStyle, fontSize: 15 }}>Ahora no</button>
+        <button style={{ ...primaryStyle, fontSize: 15 }}>Sí, activar</button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <button style={primaryStyle}>Sí, activar notificaciones</button>
+      <button style={ghostStyle}>Ahora no</button>
+    </div>
+  );
+}
+
+// ── VARIANT A: Bottom Sheet ───────────────────────────────────
+function VariantBottomSheet({ btnLayout }) {
+  return (
+    <div style={{ width: '100%', height: '100%', background: 'rgba(0,0,0,0.35)', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      {/* Dimmed background hint of Beneficios screen */}
+      <div style={{ position: 'absolute', inset: 0, padding: '60px 16px 0', display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+        <div style={{ height: 20, background: 'rgba(255,255,255,0.12)', borderRadius: 4 }}/>
+        {[1,2,3].map(i => <div key={i} style={{ height: 60, background: 'rgba(255,255,255,0.08)', borderRadius: 8 }}/>)}
+      </div>
+
+      {/* Sheet */}
+      <div style={{
+        background: '#fff',
+        borderRadius: '24px 24px 0 0',
+        padding: '8px 24px 32px',
+        position: 'relative',
+        boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+      }}>
+        {/* drag handle */}
+        <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '8px auto 20px' }}/>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          <PhoneIllustration variant="sheet" />
+
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 22, fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+              ¿Quieres enterarte de las ofertas primero?
+            </div>
+            <div style={{ marginTop: 4 }}><Squiggle width={160} color={YELLOW}/></div>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 16, color: '#555', marginTop: 8, lineHeight: 1.4 }}>
+              Te avisaremos solo cuando haya descuentos en los productos que compras
+            </div>
+          </div>
+
+          <div style={{ width: '100%' }}>
+            <Buttons btnLayout={btnLayout} />
+          </div>
+
+          <div style={{ fontFamily: 'Caveat,cursive', fontSize: 13, color: '#999', textAlign: 'center', lineHeight: 1.4 }}>
+            Puedes cambiar esto en cualquier momento desde Configuración
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── VARIANT B: Centered Modal ─────────────────────────────────
+function VariantModal({ btnLayout }) {
+  return (
+    <div style={{ width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 20px', position: 'relative' }}>
+      {/* Dimmed bg */}
+      <div style={{ position: 'absolute', inset: 0, padding: '60px 16px 0', display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+        <div style={{ height: 20, background: 'rgba(255,255,255,0.08)', borderRadius: 4 }}/>
+        {[1,2,3].map(i => <div key={i} style={{ height: 60, background: 'rgba(255,255,255,0.06)', borderRadius: 8 }}/>)}
+      </div>
+
+      {/* Modal card */}
+      <div style={{
+        background: '#fff',
+        borderRadius: 20,
+        padding: '24px 20px 20px',
+        width: '100%',
+        border: '2px solid #eee',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+        position: 'relative',
+        zIndex: 2,
+      }}>
+        {/* Red header stripe */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 6,
+          background: `linear-gradient(90deg, ${RED}, ${YELLOW})`,
+          borderRadius: '20px 20px 0 0',
+        }}/>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <PhoneIllustration variant="modal" />
+
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 21, fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+              ¿Quieres enterarte de<br/>las ofertas primero?
+            </div>
+            <div style={{ marginTop: 3 }}><Squiggle width={130} color={RED}/></div>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 15, color: '#666', marginTop: 7, lineHeight: 1.4 }}>
+              Te avisaremos solo cuando haya descuentos en los productos que compras
+            </div>
+          </div>
+
+          <div style={{ width: '100%' }}>
+            <Buttons btnLayout={btnLayout} />
+          </div>
+
+          <div style={{ fontFamily: 'Caveat,cursive', fontSize: 13, color: '#aaa', textAlign: 'center' }}>
+            Puedes cambiar esto en cualquier momento desde Configuración
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── VARIANT C: Full Screen ────────────────────────────────────
+function VariantFullscreen({ btnLayout }) {
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: '#fff',
+      display: 'flex', flexDirection: 'column',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Top red wave */}
+      <div style={{ position: 'relative', height: 180, flexShrink: 0 }}>
+        <svg viewBox="0 0 390 180" preserveAspectRatio="none"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+          <path d="M0 0 H390 V140 Q195 190 0 140 Z" fill={RED}/>
+        </svg>
+        {/* AKÍ wordmark */}
+        <div style={{
+          position: 'absolute', top: 54, left: 0, right: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+        }}>
+          <div style={{ fontFamily: 'Caveat,cursive', fontSize: 26, fontWeight: 700, color: '#fff', letterSpacing: 2 }}>
+            AKÍ CLUB
+          </div>
+          <div style={{ display: 'flex', gap: 3 }}>
+            {[0,1,2,3,4].map(i => (
+              <svg key={i} width="10" height="10" viewBox="0 0 10 10">
+                <polygon points="5,1 6.2,3.8 9.5,3.8 6.9,5.8 7.9,9 5,7.2 2.1,9 3.1,5.8 0.5,3.8 3.8,3.8" fill={YELLOW}/>
+              </svg>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Illustration, centered over the wave bottom */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: -48, position: 'relative', zIndex: 2 }}>
+        <PhoneIllustration variant="fullscreen" />
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, padding: '8px 28px 24px', display: 'flex', flexDirection: 'column', gap: 12, justifyContent: 'flex-end' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Caveat,cursive', fontSize: 24, fontWeight: 700, color: '#111', lineHeight: 1.3 }}>
+            ¿Quieres enterarte de las ofertas primero?
+          </div>
+          <div style={{ marginTop: 4 }}><Squiggle width={170} color={YELLOW}/></div>
+          <div style={{ fontFamily: 'Caveat,cursive', fontSize: 16, color: '#555', marginTop: 8, lineHeight: 1.4 }}>
+            Te avisaremos solo cuando haya descuentos en los productos que compras
+          </div>
+        </div>
+
+        <Buttons btnLayout={btnLayout} />
+
+        <div style={{ fontFamily: 'Caveat,cursive', fontSize: 13, color: '#999', textAlign: 'center', lineHeight: 1.4 }}>
+          Puedes cambiar esto en cualquier momento desde Configuración
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Wrap each in iOS frame ────────────────────────────────────
+function DeviceWrap({ label, children }) {
+  return (
+    <div className="variant-wrap">
+      <IOSDevice width={320} height={693} dark={false}>
+        {children}
+      </IOSDevice>
+      <div className="variant-label">{label}</div>
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "variant": "1",
+  "btnLayout": "stacked"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [variant, setVariant] = React.useState(TWEAK_DEFAULTS.variant);
+  const [btnLayout, setBtnLayout] = React.useState(TWEAK_DEFAULTS.btnLayout);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') document.getElementById('tweaksPanel').classList.add('open');
+      if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaksPanel').classList.remove('open');
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  React.useEffect(() => {
+    const v = document.getElementById('twk-variant');
+    const b = document.getElementById('twk-btns');
+    if (!v) return;
+    const onChange = () => {
+      setVariant(v.value);
+      setBtnLayout(b.value);
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { variant: v.value, btnLayout: b.value } }, '*');
+    };
+    v.addEventListener('change', onChange);
+    b.addEventListener('change', onChange);
+    return () => { v.removeEventListener('change', onChange); b.removeEventListener('change', onChange); };
+  }, []);
+
+  const variants = [
+    { key: '0', label: 'A – Bottom Sheet', el: <VariantBottomSheet btnLayout={btnLayout}/> },
+    { key: '1', label: 'B – Centered Modal', el: <VariantModal btnLayout={btnLayout}/> },
+    { key: '2', label: 'C – Full Screen', el: <VariantFullscreen btnLayout={btnLayout}/> },
+  ];
+
+  const shown = variant === 'all' ? variants : variants.filter(v => v.key === variant);
+
+  return (
+    <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
+      {shown.map(v => (
+        <DeviceWrap key={v.key} label={v.label}>{v.el}</DeviceWrap>
+      ))}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
