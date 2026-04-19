@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AKÍ – Mi Perfil</title>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Caveat', cursive;
+    padding: 32px 16px;
+  }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .label { color: rgba(255,255,255,0.4); font-size: 14px; font-family: monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+  .tweaks-panel {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #fff; border: 2px solid #222;
+    border-radius: 12px; padding: 16px; width: 220px;
+    display: none; flex-direction: column; gap: 12px;
+    z-index: 9999; font-family: monospace; font-size: 13px;
+    box-shadow: 4px 4px 0 #222;
+  }
+  .tweaks-panel.open { display: flex; }
+  .tweaks-panel h3 { font-size: 14px; font-weight: 700; border-bottom: 1.5px solid #ddd; padding-bottom: 8px; }
+  .tweak-row { display: flex; flex-direction: column; gap: 4px; }
+  .tweak-row label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tweak-row select { width: 100%; cursor: pointer; padding: 3px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="label">Wireframe · AKÍ Club · Mi Perfil</div>
+  <div id="root"></div>
+</div>
+
+<div class="tweaks-panel" id="tweaksPanel">
+  <h3>Tweaks</h3>
+  <div class="tweak-row">
+    <label>Sección activa</label>
+    <select id="twk-section">
+      <option value="perfil">Datos personales</option>
+      <option value="privacidad">Control de privacidad</option>
+    </select>
+  </div>
+</div>
+
+<script type="text/babel">
+const RED = '#C8102E';
+const YELLOW = '#FFD100';
+const DARK_RED = '#8a0b1f';
+
+function Toggle({ on, onToggle, label, desc }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '12px 0', borderBottom: '1px dashed #eee' }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: 'Caveat,cursive', fontSize: 16, fontWeight: 700, color: '#111' }}>{label}</div>
+        <div style={{ fontFamily: 'Caveat,cursive', fontSize: 13, color: '#888', lineHeight: 1.3 }}>{desc}</div>
+      </div>
+      <button
+        onClick={onToggle}
+        style={{
+          flexShrink: 0,
+          width: 44, height: 26,
+          borderRadius: 13,
+          background: on ? RED : '#ddd',
+          border: 'none', cursor: 'pointer',
+          position: 'relative',
+          transition: 'background 0.2s',
+        }}
+      >
+        <div style={{
+          position: 'absolute',
+          top: 3, left: on ? 21 : 3,
+          width: 20, height: 20,
+          borderRadius: '50%',
+          background: '#fff',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+          transition: 'left 0.2s',
+        }} />
+      </button>
+    </div>
+  );
+}
+
+function SectionTab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1, padding: '10px 0',
+        background: active ? RED : 'transparent',
+        color: active ? '#fff' : '#888',
+        border: 'none', cursor: 'pointer',
+        fontFamily: 'Caveat,cursive', fontSize: 16, fontWeight: active ? 700 : 400,
+        borderRadius: 8,
+        transition: 'all 0.15s',
+      }}
+    >{label}</button>
+  );
+}
+
+function DataField({ label, value, editable = true }) {
+  return (
+    <div style={{ padding: '10px 0', borderBottom: '1px dashed #eee' }}>
+      <div style={{ fontFamily: 'Caveat,cursive', fontSize: 12, color: '#aaa', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+        <span style={{ fontFamily: 'Caveat,cursive', fontSize: 17, color: '#222' }}>{value}</span>
+        {editable && (
+          <span style={{ fontFamily: 'Caveat,cursive', fontSize: 13, color: RED, cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>Editar</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileScreen({ section, setSection }) {
+  const [toggles, setToggles] = React.useState({
+    notifs: true,
+    historial: false,
+    marketing: false,
+    location: false,
+  });
+
+  const toggle = (key) => setToggles(t => ({ ...t, [key]: !t[key] }));
+
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#fafafa', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ background: RED, padding: '52px 20px 20px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Caveat,cursive', fontSize: 22, fontWeight: 700, color: RED,
+            flexShrink: 0,
+          }}>MG</div>
+          <div>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 20, fontWeight: 700, color: '#fff' }}>María García</div>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 14, color: 'rgba(255,255,255,0.75)' }}>Miembro AKÍ Club · 320 pts</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ background: '#fff', padding: '8px 16px', borderBottom: '1px solid #eee', display: 'flex', gap: 4, flexShrink: 0 }}>
+        <SectionTab label="Mis datos" active={section === 'perfil'} onClick={() => setSection('perfil')} />
+        <SectionTab label="Privacidad" active={section === 'privacidad'} onClick={() => setSection('privacidad')} />
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+        {section === 'perfil' && (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <DataField label="Nombre completo" value="María García" />
+            <DataField label="Cédula" value="V-12.345.678" editable={false} />
+            <DataField label="Correo electrónico" value="m.garcia@email.com" />
+            <DataField label="Teléfono" value="+58 424 000 0000" />
+
+            <div style={{ marginTop: 20, background: '#fff8e1', border: '1.5px solid #ffe082', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontFamily: 'Caveat,cursive', fontSize: 15, fontWeight: 700, color: '#795548', marginBottom: 4 }}>¿Para qué usamos tus datos?</div>
+              <div style={{ fontFamily: 'Caveat,cursive', fontSize: 13, color: '#8d6e63', lineHeight: 1.45 }}>
+                Tu cédula identifica tu cuenta en caja. Tu correo es para enviarte el resumen de puntos. Tu teléfono es opcional y solo para soporte.
+              </div>
+            </div>
+
+            <button style={{ marginTop: 20, width: '100%', padding: '12px 0', background: '#fff', color: '#e53935', border: '2px solid #e53935', borderRadius: 10, fontFamily: 'Caveat,cursive', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
+              Eliminar mi cuenta
+            </button>
+          </div>
+        )}
+
+        {section === 'privacidad' && (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontFamily: 'Caveat,cursive', fontSize: 14, color: '#888', marginBottom: 12, lineHeight: 1.4 }}>
+              Controlás exactamente qué compartís con AKÍ Club. Podés cambiar esto cuando quieras.
+            </div>
+
+            <Toggle on={toggles.notifs} onToggle={() => toggle('notifs')} label="Notificaciones de ofertas" desc="Avisos cuando haya descuentos en lo que comprás" />
+            <Toggle on={toggles.historial} onToggle={() => toggle('historial')} label="Análisis de compras" desc="Usamos tu historial para sugerirte ofertas relevantes" />
+            <Toggle on={toggles.marketing} onToggle={() => toggle('marketing')} label="Comunicaciones de marketing" desc="Correos y mensajes sobre novedades y promociones" />
+            <Toggle on={toggles.location} onToggle={() => toggle('location')} label="Ubicación para sucursales" desc="Mostrarte la sucursal más cercana cuando abras la app" />
+
+            <button style={{ marginTop: 20, width: '100%', padding: '12px 0', background: '#fff', color: RED, border: `2px solid ${RED}`, borderRadius: 10, fontFamily: 'Caveat,cursive', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
+              Solicitar mis datos (ARCO)
+            </button>
+            <div style={{ textAlign: 'center', fontFamily: 'Caveat,cursive', fontSize: 12, color: '#aaa', marginTop: 6 }}>
+              Acceso, Rectificación, Cancelación u Oposición sobre tus datos
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{ "section": "privacidad" }/*EDITMODE-END*/;
+
+function App() {
+  const [section, setSection] = React.useState(TWEAK_DEFAULTS.section);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === '__activate_edit_mode') document.getElementById('tweaksPanel').classList.add('open');
+      if (e.data?.type === '__deactivate_edit_mode') document.getElementById('tweaksPanel').classList.remove('open');
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  React.useEffect(() => {
+    const s = document.getElementById('twk-section');
+    if (!s) return;
+    const onChange = () => {
+      setSection(s.value);
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { section: s.value } }, '*');
+    };
+    s.addEventListener('change', onChange);
+    return () => s.removeEventListener('change', onChange);
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <IOSDevice width={390} height={844} dark={false}>
+        <ProfileScreen section={section} setSection={setSection} />
+      </IOSDevice>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
